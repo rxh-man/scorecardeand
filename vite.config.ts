@@ -15,4 +15,7 @@ export default defineConfig({
   // Disable nitro so the build outputs a plain Vite client bundle + SSR server.
   // This lets us prerender a static index.html for GitHub Pages.
   nitro: false,
+  vite: {
+    base: process.env.VITE_BASE_PATH || "/",
+  },
 });
