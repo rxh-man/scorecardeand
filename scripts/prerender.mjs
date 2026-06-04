@@ -43,12 +43,34 @@ if (!handler || typeof handler.fetch !== "function") {
   process.exit(1);
 }
 
-const request = new Request("http://localhost/", {
+const basePath = process.env.VITE_BASE_PATH || "/";
+const url = new URL(basePath, "http://localhost/").href;
+
+const request = new Request(url, {
   method: "GET",
   headers: { accept: "text/html" },
 });
 
 const response = await handler.fetch(request, {}, {});
+
+if (response.status === 307 || response.status === 302) {
+  const redirectUrl = response.headers.get("location");
+  if (redirectUrl) {
+    const followReq = new Request(new URL(redirectUrl, "http://localhost/").href, {
+      method: "GET",
+      headers: { accept: "text/html" },
+    });
+    const followRes = await handler.fetch(followReq, {}, {});
+    if (followRes.ok) {
+      const html = await followRes.text();
+      fs.mkdirSync(outDir, { recursive: true });
+      fs.writeFileSync(outFile, html);
+      console.log(`✅ Prerendered index.html written to ${path.relative(process.cwd(), outFile)}`);
+      console.log(`   ${html.length.toLocaleString()} bytes`);
+      process.exit(0);
+    }
+  }
+}
 
 if (!response.ok) {
   console.error(`❌ Server returned ${response.status}.`);
