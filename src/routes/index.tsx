@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { scorecardData, ROLES, type ScorecardEntry } from "@/data/scorecard";
 
 export const Route = createFileRoute("/")({
