@@ -230,9 +230,8 @@ function RoleView({
               {entries.map((e, idx) => {
                 const isExp = expanded === idx;
                 return (
-                  <>
+                  <Fragment key={idx}>
                     <tr
-                      key={`${idx}-row`}
                       onClick={() => setExpanded(isExp ? null : idx)}
                       className={
                         "cursor-pointer border-b border-border transition-colors group relative " +
@@ -243,8 +242,7 @@ function RoleView({
                         boxShadow: isExp ? "inset 4px 0 0 0 #C0392B" : undefined,
                       }}
                     >
-                      <td className="px-4 py-3 text-[#1A1A1A] group-hover:[box-shadow:inset_4px_0_0_0_#C0392B]"
-                          style={{ boxShadow: isExp ? undefined : undefined }}>
+                      <td className="px-4 py-3 text-[#1A1A1A]">
                         <span className="block group-hover:pl-1 transition-[padding]">{e.kpi}</span>
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -268,7 +266,7 @@ function RoleView({
                       </td>
                     </tr>
                     {isExp && (
-                      <tr key={`${idx}-exp`} className="bg-[#FDF5F5] border-b border-border">
+                      <tr className="bg-[#FDF5F5] border-b border-border">
                         <td colSpan={4} className="px-4 py-4">
                           <div className="pl-6 border-l-2 border-[#C0392B]">
                             <div className="text-xs uppercase tracking-wide text-[#888888] font-semibold mb-1">
@@ -279,7 +277,7 @@ function RoleView({
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
               {entries.length === 0 && (
