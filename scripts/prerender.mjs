@@ -13,12 +13,24 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-const serverPath = path.resolve(__dirname, "../dist/server/server.js");
 const outDir = path.resolve(__dirname, "../dist/client");
 const outFile = path.join(outDir, "index.html");
 
-if (!fs.existsSync(serverPath)) {
+// Nitro builds place the worker entry at index.mjs; non-nitro builds use server.js
+const candidates = [
+  path.resolve(__dirname, "../dist/server/index.mjs"),
+  path.resolve(__dirname, "../dist/server/server.js"),
+];
+
+let serverPath = null;
+for (const p of candidates) {
+  if (fs.existsSync(p)) {
+    serverPath = p;
+    break;
+  }
+}
+
+if (!serverPath) {
   console.error("❌ Server build not found. Run 'bun run build' first.");
   process.exit(1);
 }
