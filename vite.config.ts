@@ -12,4 +12,7 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Disable nitro so the build outputs a plain Vite client bundle + SSR server.
+  // This lets us prerender a static index.html for GitHub Pages.
+  nitro: false,
 });
