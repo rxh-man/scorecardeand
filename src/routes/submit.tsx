@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { scorecardData, ROLES } from "@/data/scorecard";
 import {
   type KpiEntry,
@@ -297,7 +297,7 @@ function KpiCard({ entry, onChange }: { entry: KpiEntry; onChange: (p: Partial<K
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
       <label className="block text-xs uppercase tracking-wide text-[#888888] font-semibold mb-1">{label}</label>
