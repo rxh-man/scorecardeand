@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Redirecting — IoT Ops Scorecard</title>
+    <meta http-equiv="refresh" content="0; url=https://scorecardeand.lovable.app/" />
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #ffffff;
+        color: #1a1a1a;
+        font-family: Inter, Arial, Helvetica, sans-serif;
+      }
+
+      .wrap {
+        width: min(560px, calc(100vw - 32px));
+        border: 1px solid #e0e0e0;
+        padding: 28px;
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: 28px;
+      }
+
+      p {
+        margin: 0;
+        color: #555555;
+        line-height: 1.6;
+      }
+
+      a {
+        display: inline-flex;
+        margin-top: 18px;
+        padding: 10px 14px;
+        border: 1px solid #c0392b;
+        color: #c0392b;
+        text-decoration: none;
+        font-weight: 600;
+      }
+    </style>
+    <script>
+      (function () {
+        var knownRoutes = new Set(["submit", "governance"]);
+        var segments = window.location.pathname.split("/").filter(Boolean);
+        var lastSegment = segments[segments.length - 1] || "";
+        var route = knownRoutes.has(lastSegment) ? "/" + lastSegment : "/";
+        var target = "https://scorecardeand.lovable.app" + route + window.location.search + window.location.hash;
+        window.location.replace(target);
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Redirecting to the scorecard</h1>
+      <p>This page maps GitHub Pages requests back to the live dashboard.</p>
+      <a href="https://scorecardeand.lovable.app/">Open dashboard</a>
+    </div>
+  </body>
+</html>
