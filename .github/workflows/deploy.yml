@@ -39,6 +39,11 @@ jobs:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
         run: node scripts/prerender.mjs
 
+      - name: Disable Jekyll & add SPA 404 fallback
+        run: |
+          touch dist/client/.nojekyll
+          cp dist/client/index.html dist/client/404.html
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
