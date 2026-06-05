@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Fragment, useMemo, useState } from "react";
 import { scorecardData, ROLES, type ScorecardEntry } from "@/data/scorecard";
+import { SiteNav } from "@/components/SiteNav";
+import { ProcessFlow } from "@/components/ProcessFlow";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -47,13 +49,9 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen bg-white text-foreground">
-      {/* Top nav */}
-      <header className="no-print sticky top-0 z-30 bg-white border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="font-bold text-[#C0392B] tracking-tight text-lg">IoT Ops Scorecard</div>
-          <div className="text-sm text-[#555555]">Governance Dashboard</div>
-        </div>
-      </header>
+      <SiteNav />
+
+      <ProcessFlow />
 
       {/* Hero / filters */}
       <section className="no-print bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] border-b border-border">
