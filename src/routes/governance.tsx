@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   type Submission,
   loadSubmissions,
@@ -319,7 +319,7 @@ function ReviewDrawer({
   );
 }
 
-function Box({ label, value }: { label: string; value: React.ReactNode }) {
+function Box({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="bg-[#FAFAFA] border border-border rounded p-2">
       <div className="text-[10px] uppercase tracking-wide text-[#888888] font-semibold">{label}</div>
