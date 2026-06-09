@@ -9,12 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TalentRouteImport } from './routes/talent'
 import { Route as SubmitRouteImport } from './routes/submit'
 import { Route as GovernanceRouteImport } from './routes/governance'
-import { Route as TalentRouteImport } from './routes/talent'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 
+const TalentRoute = TalentRouteImport.update({
+  id: '/talent',
+  path: '/talent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SubmitRoute = SubmitRouteImport.update({
   id: '/submit',
   path: '/submit',
@@ -23,11 +28,6 @@ const SubmitRoute = SubmitRouteImport.update({
 const GovernanceRoute = GovernanceRouteImport.update({
   id: '/governance',
   path: '/governance',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TalentRoute = TalentRouteImport.update({
-  id: '/talent',
-  path: '/talent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -44,43 +44,50 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/talent': typeof TalentRoute
   '/governance': typeof GovernanceRoute
   '/submit': typeof SubmitRoute
+  '/talent': typeof TalentRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/talent': typeof TalentRoute
   '/governance': typeof GovernanceRoute
   '/submit': typeof SubmitRoute
+  '/talent': typeof TalentRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/talent': typeof TalentRoute
   '/governance': typeof GovernanceRoute
   '/submit': typeof SubmitRoute
+  '/talent': typeof TalentRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/talent' | '/governance' | '/submit'
+  fullPaths: '/' | '/admin' | '/governance' | '/submit' | '/talent'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/talent' | '/governance' | '/submit'
-  id: '__root__' | '/' | '/admin' | '/talent' | '/governance' | '/submit'
+  to: '/' | '/admin' | '/governance' | '/submit' | '/talent'
+  id: '__root__' | '/' | '/admin' | '/governance' | '/submit' | '/talent'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
-  TalentRoute: typeof TalentRoute
   GovernanceRoute: typeof GovernanceRoute
   SubmitRoute: typeof SubmitRoute
+  TalentRoute: typeof TalentRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/talent': {
+      id: '/talent'
+      path: '/talent'
+      fullPath: '/talent'
+      preLoaderRoute: typeof TalentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/submit': {
       id: '/submit'
       path: '/submit'
@@ -93,13 +100,6 @@ declare module '@tanstack/react-router' {
       path: '/governance'
       fullPath: '/governance'
       preLoaderRoute: typeof GovernanceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/talent': {
-      id: '/talent'
-      path: '/talent'
-      fullPath: '/talent'
-      preLoaderRoute: typeof TalentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -122,20 +122,10 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
-  TalentRoute: TalentRoute,
   GovernanceRoute: GovernanceRoute,
   SubmitRoute: SubmitRoute,
+  TalentRoute: TalentRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
