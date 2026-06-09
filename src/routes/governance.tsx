@@ -356,3 +356,12 @@ function Box({ label, value }: { label: string; value: ReactNode }) {
     </div>
   );
 }
+
+function Snap({ label, value, accent }: { label: string; value: ReactNode; accent?: boolean }) {
+  return (
+    <div className={"rounded-md border p-3 " + (accent ? "border-[#C0392B] bg-[#FDECEA]" : "border-[#E0E0E0]")}>
+      <div className="text-[10px] uppercase tracking-wide text-[#888888] font-semibold">{label}</div>
+      <div className={"text-xl tabular-nums font-semibold mt-0.5 " + (accent ? "text-[#C0392B]" : "text-[#1A1A1A]")}>{value}</div>
+    </div>
+  );
+}
