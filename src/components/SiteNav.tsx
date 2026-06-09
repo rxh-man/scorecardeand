@@ -12,8 +12,6 @@ export function SiteNav() {
           <NavLink to="/">Dashboard</NavLink>
           <NavLink to="/submit">Submit</NavLink>
           <NavLink to="/governance">Governance</NavLink>
-          <NavLink to="/talent">Talent Pool</NavLink>
-          <NavLink to="/admin">Admin</NavLink>
         </nav>
       </div>
     </header>

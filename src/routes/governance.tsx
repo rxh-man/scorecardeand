@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   type Submission,
@@ -6,9 +6,8 @@ import {
   upsertSubmission,
   ragColor,
 } from "@/lib/submissions";
-import { loadCandidates, loadProjects, computeStats } from "@/lib/talent";
 import { SiteNav } from "@/components/SiteNav";
-import { Lock, ShieldCheck, FileText, Users } from "lucide-react";
+import { Lock, ShieldCheck, FileText } from "lucide-react";
 
 export const Route = createFileRoute("/governance")({
   head: () => ({
@@ -24,18 +23,10 @@ function GovernancePage() {
   const [list, setList] = useState<Submission[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "pending" | "finalized">("pending");
-  const [candidates, setCandidates] = useState(() => [] as ReturnType<typeof loadCandidates>);
-  const [projects, setProjects] = useState(() => [] as ReturnType<typeof loadProjects>);
 
   useEffect(() => {
     setList(loadSubmissions());
-    setCandidates(loadCandidates());
-    setProjects(loadProjects());
   }, []);
-
-  const talent = useMemo(() => computeStats(candidates), [candidates]);
-  const totalRequested = projects.reduce((s, p) => s + (p.requested || 0), 0);
-  const totalSelectedProj = projects.reduce((s, p) => s + (p.selected || 0), 0);
 
   const filtered = useMemo(() => {
     if (filter === "all") return list;
@@ -79,26 +70,6 @@ function GovernancePage() {
             ))}
           </div>
         </div>
-
-        {candidates.length > 0 && (
-          <section className="mt-6 bg-white border border-[#E0E0E0] rounded-lg p-5">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div className="text-sm font-semibold text-[#1A1A1A] flex items-center gap-2">
-                <Users size={14} className="text-[#C0392B]" /> Talent Pool Snapshot
-              </div>
-              <Link to="/talent" className="text-xs text-[#C0392B] font-semibold hover:underline">
-                View full talent pool →
-              </Link>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 mt-4">
-              <Snap label="Talent Pool" value={talent.total} />
-              <Snap label="TAQA" value={talent.byCompany.TAQA} />
-              <Snap label="Etihad WE" value={talent.byCompany["Etihad WE"]} />
-              <Snap label="Selected" value={talent.byStatus.Selected} accent />
-              <Snap label="Projects · Req/Sel" value={`${totalRequested} / ${totalSelectedProj}`} />
-            </div>
-          </section>
-        )}
 
         {filtered.length === 0 ? (
           <div className="mt-10 bg-white border border-dashed border-border rounded-lg p-12 text-center text-sm text-[#888888]">
@@ -353,15 +324,6 @@ function Box({ label, value }: { label: string; value: ReactNode }) {
     <div className="bg-[#FAFAFA] border border-border rounded p-2">
       <div className="text-[10px] uppercase tracking-wide text-[#888888] font-semibold">{label}</div>
       <div className="text-sm text-[#1A1A1A] mt-0.5 font-medium">{value}</div>
-    </div>
-  );
-}
-
-function Snap({ label, value, accent }: { label: string; value: ReactNode; accent?: boolean }) {
-  return (
-    <div className={"rounded-md border p-3 " + (accent ? "border-[#C0392B] bg-[#FDECEA]" : "border-[#E0E0E0]")}>
-      <div className="text-[10px] uppercase tracking-wide text-[#888888] font-semibold">{label}</div>
-      <div className={"text-xl tabular-nums font-semibold mt-0.5 " + (accent ? "text-[#C0392B]" : "text-[#1A1A1A]")}>{value}</div>
     </div>
   );
 }

@@ -9,17 +9,10 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TalentRouteImport } from './routes/talent'
 import { Route as SubmitRouteImport } from './routes/submit'
 import { Route as GovernanceRouteImport } from './routes/governance'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 
-const TalentRoute = TalentRouteImport.update({
-  id: '/talent',
-  path: '/talent',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SubmitRoute = SubmitRouteImport.update({
   id: '/submit',
   path: '/submit',
@@ -30,11 +23,6 @@ const GovernanceRoute = GovernanceRouteImport.update({
   path: '/governance',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -43,51 +31,36 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
   '/governance': typeof GovernanceRoute
   '/submit': typeof SubmitRoute
-  '/talent': typeof TalentRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
   '/governance': typeof GovernanceRoute
   '/submit': typeof SubmitRoute
-  '/talent': typeof TalentRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
   '/governance': typeof GovernanceRoute
   '/submit': typeof SubmitRoute
-  '/talent': typeof TalentRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/governance' | '/submit' | '/talent'
+  fullPaths: '/' | '/governance' | '/submit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/governance' | '/submit' | '/talent'
-  id: '__root__' | '/' | '/admin' | '/governance' | '/submit' | '/talent'
+  to: '/' | '/governance' | '/submit'
+  id: '__root__' | '/' | '/governance' | '/submit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
   GovernanceRoute: typeof GovernanceRoute
   SubmitRoute: typeof SubmitRoute
-  TalentRoute: typeof TalentRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/talent': {
-      id: '/talent'
-      path: '/talent'
-      fullPath: '/talent'
-      preLoaderRoute: typeof TalentRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/submit': {
       id: '/submit'
       path: '/submit'
@@ -102,13 +75,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GovernanceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -121,11 +87,19 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
   GovernanceRoute: GovernanceRoute,
   SubmitRoute: SubmitRoute,
-  TalentRoute: TalentRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
