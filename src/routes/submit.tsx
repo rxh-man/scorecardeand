@@ -225,37 +225,16 @@ function KpiCard({ entry, onChange }: { entry: KpiEntry; onChange: (p: Partial<K
             className="w-full px-3 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:border-[#C0392B]"
           />
         </Field>
-        <Field label="RAG status">
-          <div className="flex gap-1">
-            {(["Red", "Amber", "Green"] as RAG[]).map((r) => {
-              const c = ragColor(r);
-              const active = entry.rag === r;
-              return (
-                <button
-                  key={r}
-                  onClick={() => onChange({ rag: r })}
-                  className="flex-1 px-2 py-1.5 text-xs font-semibold rounded-md border transition-all"
-                  style={{
-                    background: active ? c.bg : "#FFFFFF",
-                    color: active ? c.fg : "#555555",
-                    borderColor: active ? c.border : "#E0E0E0",
-                  }}
-                >
-                  {r}
-                </button>
-              );
-            })}
-          </div>
-        </Field>
-        <Field label="Status indicator">
+        <Field label="RAG (auto)">
           <div
             className="px-3 py-1.5 text-xs font-semibold rounded-md border text-center"
             style={{ background: rc.bg, color: rc.fg, borderColor: rc.border }}
           >
-            {entry.rag}
+            {entry.rag} · {entry.selfScore}/100
           </div>
         </Field>
       </div>
+
 
       <div className="mt-3">
         <Field label="Comment">
