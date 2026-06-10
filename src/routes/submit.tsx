@@ -56,8 +56,18 @@ function SubmitPage() {
     setSubmitted(null);
   };
 
+const scoreToRag = (score: number): RAG =>
+  score >= 80 ? "Green" : score >= 50 ? "Amber" : "Red";
+
   const updateEntry = (i: number, patch: Partial<KpiEntry>) => {
-    setEntries((cur) => cur.map((e, idx) => (idx === i ? { ...e, ...patch } : e)));
+    setEntries((cur) =>
+      cur.map((e, idx) => {
+        if (idx !== i) return e;
+        const next = { ...e, ...patch };
+        if (patch.selfScore !== undefined) next.rag = scoreToRag(next.selfScore);
+        return next;
+      }),
+    );
   };
 
   const handleSubmit = () => {
