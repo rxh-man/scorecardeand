@@ -56,8 +56,18 @@ function SubmitPage() {
     setSubmitted(null);
   };
 
+const scoreToRag = (score: number): RAG =>
+  score >= 80 ? "Green" : score >= 50 ? "Amber" : "Red";
+
   const updateEntry = (i: number, patch: Partial<KpiEntry>) => {
-    setEntries((cur) => cur.map((e, idx) => (idx === i ? { ...e, ...patch } : e)));
+    setEntries((cur) =>
+      cur.map((e, idx) => {
+        if (idx !== i) return e;
+        const next = { ...e, ...patch };
+        if (patch.selfScore !== undefined) next.rag = scoreToRag(next.selfScore);
+        return next;
+      }),
+    );
   };
 
   const handleSubmit = () => {
@@ -195,7 +205,7 @@ function KpiCard({ entry, onChange }: { entry: KpiEntry; onChange: (p: Partial<K
         </div>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <Field label="Actual">
           <input
             type="text"
@@ -215,37 +225,16 @@ function KpiCard({ entry, onChange }: { entry: KpiEntry; onChange: (p: Partial<K
             className="w-full px-3 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:border-[#C0392B]"
           />
         </Field>
-        <Field label="RAG status">
-          <div className="flex gap-1">
-            {(["Red", "Amber", "Green"] as RAG[]).map((r) => {
-              const c = ragColor(r);
-              const active = entry.rag === r;
-              return (
-                <button
-                  key={r}
-                  onClick={() => onChange({ rag: r })}
-                  className="flex-1 px-2 py-1.5 text-xs font-semibold rounded-md border transition-all"
-                  style={{
-                    background: active ? c.bg : "#FFFFFF",
-                    color: active ? c.fg : "#555555",
-                    borderColor: active ? c.border : "#E0E0E0",
-                  }}
-                >
-                  {r}
-                </button>
-              );
-            })}
-          </div>
-        </Field>
-        <Field label="Status indicator">
+        <Field label="RAG (auto)">
           <div
             className="px-3 py-1.5 text-xs font-semibold rounded-md border text-center"
             style={{ background: rc.bg, color: rc.fg, borderColor: rc.border }}
           >
-            {entry.rag}
+            {entry.rag} · {entry.selfScore}/100
           </div>
         </Field>
       </div>
+
 
       <div className="mt-3">
         <Field label="Comment">

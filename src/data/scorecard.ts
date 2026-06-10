@@ -232,7 +232,7 @@ export const scorecardData: ScorecardEntry[] = [
   { role: "Quality Engineer -Ethihad", kpi: "Return note for unused materials (signed by warehouse)", target: "100%", measurement: "Warehouse log", weight: 15 },
 ];
 
-export const ROLES = [
+const ALL_ROLES = [
   "Acceptance Team Lead",
   "Supervisor (Team Leader)",
   "Field Operations Senior Manager",
@@ -256,3 +256,11 @@ export const ROLES = [
   "Quality Engineer - TAQA",
   "Quality Engineer -Ethihad",
 ];
+
+// Only expose roles whose KPI weights sum to exactly 100%.
+export const ROLES = ALL_ROLES.filter((r) => {
+  const total = scorecardData
+    .filter((e) => e.role === r)
+    .reduce((s, e) => s + e.weight, 0);
+  return total === 100;
+});
