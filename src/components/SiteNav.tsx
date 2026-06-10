@@ -1,12 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import eandLogo from "@/assets/eand.png.asset.json";
 
 export function SiteNav() {
   return (
     <header className="no-print sticky top-0 z-30 bg-white border-b border-border">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
-        <Link to="/" className="font-bold text-[#C0392B] tracking-tight text-lg">
-          IoT Ops Scorecard
+        <Link to="/" className="flex items-center gap-2.5 font-bold text-[#C0392B] tracking-tight text-lg">
+          <img src={eandLogo.url} alt="e& Enterprise" className="h-7 w-auto" />
+          <span>IoT Ops Scorecard</span>
         </Link>
         <nav className="flex items-center gap-1 text-sm">
           <NavLink to="/">Dashboard</NavLink>
