@@ -205,16 +205,8 @@ function KpiCard({ entry, onChange }: { entry: KpiEntry; onChange: (p: Partial<K
         </div>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        <Field label="Actual">
-          <input
-            type="text"
-            value={entry.actual}
-            onChange={(e) => onChange({ actual: e.target.value })}
-            placeholder="e.g. 95%"
-            className="w-full px-3 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:border-[#C0392B]"
-          />
-        </Field>
+      <div className="grid sm:grid-cols-2 gap-3">
+
         <Field label="Self-score (0–100)">
           <input
             type="number"
