@@ -786,6 +786,13 @@ export const scorecardData: ScorecardEntry[] = [
   },
   {
     "role": "OPS SM/L2 & Security Manager",
+    "kpi": "Overall KPIs Compliance",
+    "target": ">= 95% SLA Met (Service Managers, L2, Vendors)",
+    "measurement": "Percentage of incidents, requests, and changes resolved within SLA; monthly.",
+    "weight": 15
+  },
+  {
+    "role": "OPS SM/L2 & Security Manager",
     "kpi": "Customer Satisfaction (CSAT)",
     "target": ">= 80%",
     "measurement": "Aggregated customer feedback Surveys",
