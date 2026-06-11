@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import eandLogo from "@/assets/eand.png.asset.json";
+import eandLogo from "@/assets/eand.png";
 
 export function SiteNav() {
   return (
