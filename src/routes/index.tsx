@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { ArrowRight, ChevronRight, Layers } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { ArrowDown, ArrowRight, ArrowUp, ChevronRight, Layers, Lock } from "lucide-react";
 import { scorecardData, type ScorecardEntry } from "@/data/scorecard";
 import { HEAD, orgTree, type OrgNode } from "@/data/hierarchy";
 import { SiteNav } from "@/components/SiteNav";
@@ -138,10 +138,13 @@ NODES.forEach((_, role) => {
   LINKS_UP.set(role, (KPIS.get(role) ?? []).filter((k) => feedsUp(role, k.kpi)).length);
 });
 
-const SHADES = ["#E00800", "#181F4B", "#7C0124", "#9C9C99", "#EB6A64", "#4A5290", "#B5586F", "#71716F"];
-
 function Dashboard() {
-  const [selected, setSelected] = useState<string>(HEAD);
+  const [selected, setSelectedRaw] = useState<string>(HEAD);
+  const detailRef = useRef<HTMLElement>(null);
+  const setSelected = (r: string) => {
+    setSelectedRaw(r);
+    requestAnimationFrame(() => detailRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }));
+  };
 
   const path = useMemo(() => [selected, ...ancestors(selected)], [selected]);
   const below = useMemo(() => new Set(descendants(selected)), [selected]);
@@ -149,7 +152,17 @@ function Dashboard() {
   const kpis = KPIS.get(selected) ?? [];
   const totalWeight = kpis.reduce((s, k) => s + k.weight, 0);
   const node = NODES.get(selected)!;
-  const parent = node.parent;
+  const rows = kpis.map((k) => ({
+    k,
+    up: feedsUp(selected, k.kpi),
+    down: fedBy(selected, k.kpi),
+    rollup: /scorecard/i.test(k.kpi) && node.children.length > 0,
+  }));
+  const passed = rows.filter((r) => r.up);
+  const own = rows.filter((r) => !r.up);
+  const passedWeight = passed.reduce((s, r) => s + r.k.weight, 0);
+  const ownWeight = totalWeight - passedWeight;
+  const received = rows.filter((r) => r.down.length > 0 || r.rollup);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -252,7 +265,7 @@ function Dashboard() {
       </section>
 
       {/* The science */}
-      <section className="max-w-7xl mx-auto px-6 py-10">
+      <section ref={detailRef} className="max-w-7xl mx-auto px-6 py-10 scroll-mt-16">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 pb-5 border-b border-border">
           <div>
             <nav className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground" aria-label="Path">
@@ -271,7 +284,7 @@ function Dashboard() {
             <div className="flex gap-8">
               <Stat label="KPIs" value={String(kpis.length)} />
               <Stat label="Total weight" value={`${totalWeight}%`} />
-              <Stat label="Travel up" value={String(LINKS_UP.get(selected) ?? 0)} />
+              <Stat label="Passed up" value={`${passedWeight}%`} />
             </div>
           )}
         </div>
@@ -314,108 +327,141 @@ function Dashboard() {
           </div>
         ) : (
           <>
-            {/* How the grade is built */}
+            {/* Split: passed up vs own */}
             <div className="mt-6">
-              <div className="text-sm font-semibold">How this grade is built</div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Grade = sum of (KPI score × KPI weight). Each block is one KPI's share.
-              </p>
-              <div className="mt-3 flex w-full h-9 rounded-md overflow-hidden border border-border">
-                {kpis.map((k, i) => (
-                  <div
-                    key={i}
-                    title={`${k.kpi} — ${k.weight}%`}
-                    className="h-full flex items-center justify-center text-[11px] font-semibold text-primary-foreground border-r border-background last:border-r-0"
-                    style={{ width: `${(k.weight / totalWeight) * 100}%`, backgroundColor: SHADES[i % SHADES.length] }}
-                  >
-                    {k.weight}%
+              <div className="flex w-full h-10 rounded-md overflow-hidden border border-border text-xs font-semibold text-primary-foreground">
+                {passedWeight > 0 && (
+                  <div className="h-full flex items-center px-3 bg-primary" style={{ width: `${(passedWeight / totalWeight) * 100}%` }}>
+                    <span className="truncate">{passedWeight}% passed up</span>
                   </div>
-                ))}
+                )}
+                {ownWeight > 0 && (
+                  <div className="h-full flex items-center px-3 bg-navy" style={{ width: `${(ownWeight / totalWeight) * 100}%` }}>
+                    <span className="truncate">{ownWeight}% own scorecard</span>
+                  </div>
+                )}
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Grade = sum of (KPI score × KPI weight). Red is the part that travels to the role above; navy
+                stays with this role.
+              </p>
+            </div>
+
+            <div className="mt-6 grid gap-6 lg:grid-cols-2">
+              {/* Passed up */}
+              <div className="rounded-lg border border-primary overflow-hidden">
+                <div className="px-4 py-3 bg-rose-tint flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                    <ArrowUp size={16} /> Grades passed up
+                  </div>
+                  <span className="text-xs font-semibold text-primary tabular-nums">
+                    {passed.length} KPIs · {passedWeight}%
+                  </span>
+                </div>
+                <ul>
+                  {passed.map(({ k, up }, i) => (
+                    <li key={i} className="px-4 py-3 border-t border-border">
+                      <div className="flex items-start gap-3">
+                        <span className="shrink-0 w-10 text-sm font-semibold text-primary tabular-nums">{k.weight}%</span>
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium leading-snug">{k.kpi}</div>
+                          <div className="mt-0.5 text-[11px] text-muted-foreground">Target: {k.target || "—"}</div>
+                          <button
+                            onClick={() => setSelected(up!.role)}
+                            className="mt-2 block w-full text-left rounded-md bg-rose-tint px-3 py-2 hover:bg-primary hover:text-primary-foreground transition-colors"
+                          >
+                            <div className="text-[11px] font-semibold">
+                              → {up!.role} · {up!.weight}% of that grade
+                            </div>
+                            <div className="text-[11px] opacity-75 leading-snug">{up!.kpi}</div>
+                          </button>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                  {!passed.length && (
+                    <li className="px-4 py-6 border-t border-border text-xs text-muted-foreground">
+                      No KPI here is carried into the role above by name.
+                    </li>
+                  )}
+                </ul>
+              </div>
+
+              {/* Own */}
+              <div className="rounded-lg border border-navy overflow-hidden">
+                <div className="px-4 py-3 bg-navy text-primary-foreground flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <Lock size={15} /> Own scorecard — not passed on
+                  </div>
+                  <span className="text-xs font-semibold tabular-nums">
+                    {own.length} KPIs · {ownWeight}%
+                  </span>
+                </div>
+                <ul>
+                  {own.map(({ k }, i) => (
+                    <li key={i} className="px-4 py-3 border-t border-border">
+                      <div className="flex items-start gap-3">
+                        <span className="shrink-0 w-10 text-sm font-semibold text-navy tabular-nums">{k.weight}%</span>
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium leading-snug">{k.kpi}</div>
+                          <div className="mt-0.5 text-[11px] text-muted-foreground">
+                            Target: {k.target || "—"}
+                            {k.measurement ? ` · Measured by: ${k.measurement}` : ""}
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                  {!own.length && (
+                    <li className="px-4 py-6 border-t border-border text-xs text-muted-foreground">
+                      Every KPI in this role is passed up.
+                    </li>
+                  )}
+                </ul>
               </div>
             </div>
 
-            {/* What merges and where it travels */}
-            <div className="mt-8">
-              <div className="hidden md:grid grid-cols-[1fr_24px_1.2fr_24px_1fr] gap-3 pb-2 text-[11px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border">
-                <span>Merges in from</span>
-                <span />
-                <span>KPI in this grade</span>
-                <span />
-                <span>Travels up to</span>
-              </div>
-              <ul>
-                {kpis.map((k, i) => {
-                  const up = feedsUp(selected, k.kpi);
-                  const down = fedBy(selected, k.kpi);
-                  const rollup = /scorecard/i.test(k.kpi) && node.children.length > 0;
-                  return (
-                    <li
-                      key={i}
-                      className="grid md:grid-cols-[1fr_24px_1.2fr_24px_1fr] gap-3 py-4 border-b border-border md:items-center"
-                    >
-                      <div className="space-y-1.5">
+            {/* Received */}
+            {received.length > 0 && (
+              <div className="mt-6 rounded-lg border border-border overflow-hidden">
+                <div className="px-4 py-3 bg-muted flex items-center gap-2 text-sm font-semibold">
+                  <ArrowDown size={16} className="text-navy" /> Grades received from below
+                </div>
+                <ul>
+                  {received.map(({ k, down, rollup }, i) => (
+                    <li key={i} className="px-4 py-3 border-t border-border grid gap-3 md:grid-cols-[1fr_20px_1fr] md:items-center">
+                      <div className="flex flex-wrap gap-1.5">
                         {down.map((d, j) => (
                           <button
                             key={j}
                             onClick={() => setSelected(d.role)}
-                            className="block w-full text-left rounded-md border border-navy px-3 py-2 hover:bg-navy hover:text-primary-foreground transition-colors"
+                            title={d.kpi}
+                            className="rounded-full border border-navy px-2.5 py-1 text-[11px] font-medium text-navy hover:bg-navy hover:text-primary-foreground transition-colors"
                           >
-                            <div className="text-[11px] font-semibold">
-                              {d.role} · {d.weight}%
-                            </div>
-                            <div className="text-[11px] opacity-75 leading-snug">{d.kpi}</div>
+                            {d.role} · {d.weight}%
                           </button>
                         ))}
-                        {rollup && (
-                          <div className="rounded-md bg-stone px-3 py-2 text-[11px]">
-                            <span className="font-semibold">Scorecards of: </span>
-                            {node.children.join(", ")}
-                          </div>
-                        )}
-                        {!down.length && !rollup && (
-                          <div className="rounded-md bg-muted px-3 py-2 text-[11px] text-muted-foreground">
-                            <span className="font-semibold text-foreground">Measured directly: </span>
-                            {k.measurement || "—"}
-                          </div>
-                        )}
+                        {rollup &&
+                          node.children.map((c) => (
+                            <button
+                              key={c}
+                              onClick={() => setSelected(c)}
+                              className="rounded-full bg-stone px-2.5 py-1 text-[11px] font-medium hover:bg-navy hover:text-primary-foreground transition-colors"
+                            >
+                              {c} · whole scorecard
+                            </button>
+                          ))}
                       </div>
                       <ArrowRight size={16} className="hidden md:block text-navy" />
-                      <div className="rounded-md border border-border px-3 py-2.5">
-                        <div className="flex items-start gap-3">
-                          <span
-                            className="shrink-0 rounded px-1.5 py-0.5 text-xs font-semibold text-primary-foreground tabular-nums"
-                            style={{ backgroundColor: SHADES[i % SHADES.length] }}
-                          >
-                            {k.weight}%
-                          </span>
-                          <div className="text-sm font-medium leading-snug">{k.kpi}</div>
-                        </div>
-                        <div className="mt-1.5 text-[11px] text-muted-foreground">Target: {k.target || "—"}</div>
-                      </div>
-                      <ArrowRight size={16} className="hidden md:block text-primary" />
-                      <div>
-                        {up ? (
-                          <button
-                            onClick={() => setSelected(up.role)}
-                            className="block w-full text-left rounded-md bg-rose-tint border border-primary px-3 py-2 hover:bg-primary hover:text-primary-foreground transition-colors"
-                          >
-                            <div className="text-[11px] font-semibold">
-                              {up.role} · {up.weight}% of that grade
-                            </div>
-                            <div className="text-[11px] opacity-75 leading-snug">{up.kpi}</div>
-                          </button>
-                        ) : (
-                          <div className="px-3 py-2 text-[11px] text-muted-foreground">
-                            Stays in this grade
-                            {parent ? ` — reaches ${parent} through the overall score only.` : "."}
-                          </div>
-                        )}
+                      <div className="text-sm font-medium leading-snug">
+                        <span className="text-primary tabular-nums mr-2">{k.weight}%</span>
+                        {k.kpi}
                       </div>
                     </li>
-                  );
-                })}
-              </ul>
-            </div>
+                  ))}
+                </ul>
+              </div>
+            )}
           </>
         )}
       </section>
