@@ -78,16 +78,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "IoT Ops Scorecard" },
+      { name: "description", content: "Scorecard structure for IoT Delivery & Operations." },
+      { name: "author", content: "e& Enterprise" },
+      { property: "og:title", content: "IoT Ops Scorecard" },
+      { property: "og:description", content: "Scorecard structure for IoT Delivery & Operations." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
       {
         rel: "preconnect",
         href: "https://fonts.googleapis.com",

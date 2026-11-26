@@ -23,10 +23,9 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-/* ---------- top-down layout: one column per manager, teams stacked beneath ---------- */
-const NH = 62;
-const LEVEL = NH + 46;
-const STACK = NH + 14;
+/* ---------- top-down layout: every level is a row; one column per bottom-most role ---------- */
+const NH = 72;
+const LEVEL = NH + 44;
 
 interface Placed {
   role: string;
@@ -40,30 +39,19 @@ interface Placed {
 
 const NODES = new Map<string, Placed>();
 let slot = 0;
-let maxStack = 0;
-const add = (n: OrgNode, depth: number, cx: number, w: number, y: number, parent: string | null) =>
-  NODES.set(n.role, { role: n.role, depth, cx, w, y, parent, children: (n.children ?? []).map((c) => c.role) });
-for (const pillar of orgTree.children ?? []) {
-  const mgrs = pillar.children ?? [];
-  if (!mgrs.length) {
-    add(pillar, 1, slot + 0.5, 1, LEVEL, orgTree.role);
-    slot++;
-    continue;
-  }
-  const centres = mgrs.map((m) => {
-    const c = slot + 0.5;
-    slot++;
-    add(m, 2, c, 1, LEVEL * 2, pillar.role);
-    const teams = m.children ?? [];
-    maxStack = Math.max(maxStack, teams.length);
-    teams.forEach((t, i) => add(t, 3, c, 1, LEVEL * 2 + NH + 30 + i * STACK, m.role));
-    return c;
-  });
-  add(pillar, 1, centres.reduce((x, y) => x + y, 0) / centres.length, 1.8, LEVEL, orgTree.role);
+let maxDepth = 0;
+function place(n: OrgNode, depth: number, parent: string | null): number {
+  const kids = n.children ?? [];
+  const cs = kids.map((c) => place(c, depth + 1, n.role));
+  const cx = cs.length ? cs.reduce((a, b) => a + b, 0) / cs.length : slot++ + 0.5;
+  const w = depth === 0 ? 3.4 : kids.length > 1 ? (depth === 1 ? 2.4 : 1.5) : 1;
+  maxDepth = Math.max(maxDepth, depth);
+  NODES.set(n.role, { role: n.role, depth, cx, w, y: depth * LEVEL, parent, children: kids.map((c) => c.role) });
+  return cx;
 }
+place(orgTree, 0, null);
 const SLOTS = slot;
-add(orgTree, 0, SLOTS / 2, 2.6, 0, null);
-const HEIGHT = LEVEL * 2 + NH + 30 + Math.max(maxStack - 1, 0) * STACK + NH;
+const HEIGHT = maxDepth * LEVEL + NH;
 
 function ancestors(role: string): string[] {
   const out: string[] = [];
@@ -226,7 +214,7 @@ function Dashboard() {
                 return (
                   <div
                     key={n.role}
-                    className="absolute px-1"
+                    className="absolute px-0.5"
                     style={{
                       left: `${((n.cx - n.w / 2) / SLOTS) * 100}%`,
                       width: `${(n.w / SLOTS) * 100}%`,
@@ -239,7 +227,7 @@ function Dashboard() {
                       aria-pressed={isSel}
                       title={n.role}
                       className={
-                        "w-full h-full rounded-md border px-2 flex flex-col items-center justify-center text-center transition-colors " +
+                        "w-full h-full rounded-md border px-0.5 overflow-hidden flex flex-col items-center justify-center text-center transition-colors " +
                         (isSel
                           ? "bg-primary border-primary text-primary-foreground"
                           : up
@@ -251,8 +239,8 @@ function Dashboard() {
                                 : "bg-background border-border text-foreground hover:border-primary")
                       }
                     >
-                      <span className="text-[11px] font-semibold leading-[1.15] line-clamp-3">{n.role}</span>
-                      <span className="text-[10px] opacity-70 leading-tight mt-0.5">
+                      <span className="text-[9px] font-semibold tracking-tight leading-[1.15] line-clamp-4 break-words hyphens-auto">{n.role}</span>
+                      <span className="text-[9px] opacity-70 leading-tight mt-0.5">
                         {count ? `${count} KPIs` : `${n.children.length} pillars`}
                       </span>
                     </button>
