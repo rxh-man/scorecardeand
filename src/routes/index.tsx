@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, ChevronRight, Layers } from "lucide-react";
+import { ArrowRight, ChevronRight, Layers } from "lucide-react";
 import { scorecardData, type ScorecardEntry } from "@/data/scorecard";
 import { HEAD, orgTree, type OrgNode } from "@/data/hierarchy";
 import { SiteNav } from "@/components/SiteNav";
 
-const TITLE = "IoT Ops Scorecard — How every KPI reaches the top";
+const TITLE = "IoT Ops Scorecard — Scorecard structure";
 const DESC =
-  "Follow each KPI from field measurement through managers and pillars to the Head of IoT Delivery & Operations.";
+  "Top-down scorecard structure showing how each role's grade is built, what merges into it and where it travels.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,35 +23,47 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-/* ---------- layout of the network ---------- */
-const NW = 236;
-const NH = 48;
-const COL = 296;
-const ROW = 60;
-const LAYERS = ["Head", "Pillars", "Managers", "Teams"];
+/* ---------- top-down layout: one column per manager, teams stacked beneath ---------- */
+const NH = 62;
+const LEVEL = NH + 46;
+const STACK = NH + 14;
 
 interface Placed {
   role: string;
   depth: number;
-  x: number;
+  cx: number; // centre, in column units
+  w: number; // width, in column units
   y: number;
   parent: string | null;
   children: string[];
 }
 
 const NODES = new Map<string, Placed>();
-let leafCount = 0;
-function place(n: OrgNode, depth: number, parent: string | null): number {
-  const kids = n.children ?? [];
-  const ys = kids.map((c) => place(c, depth + 1, n.role));
-  const y = ys.length ? ys.reduce((a, b) => a + b, 0) / ys.length : leafCount++ * ROW;
-  NODES.set(n.role, { role: n.role, depth, x: depth * COL, y, parent, children: kids.map((c) => c.role) });
-  return y;
+let slot = 0;
+let maxStack = 0;
+const add = (n: OrgNode, depth: number, cx: number, w: number, y: number, parent: string | null) =>
+  NODES.set(n.role, { role: n.role, depth, cx, w, y, parent, children: (n.children ?? []).map((c) => c.role) });
+for (const pillar of orgTree.children ?? []) {
+  const mgrs = pillar.children ?? [];
+  if (!mgrs.length) {
+    add(pillar, 1, slot + 0.5, 1, LEVEL, orgTree.role);
+    slot++;
+    continue;
+  }
+  const centres = mgrs.map((m) => {
+    const c = slot + 0.5;
+    slot++;
+    add(m, 2, c, 1, LEVEL * 2, pillar.role);
+    const teams = m.children ?? [];
+    maxStack = Math.max(maxStack, teams.length);
+    teams.forEach((t, i) => add(t, 3, c, 1, LEVEL * 2 + NH + 30 + i * STACK, m.role));
+    return c;
+  });
+  add(pillar, 1, centres.reduce((x, y) => x + y, 0) / centres.length, 1.8, LEVEL, orgTree.role);
 }
-place(orgTree, 0, null);
-const MAX_DEPTH = Math.max(...Array.from(NODES.values(), (n) => n.depth));
-const WIDTH = MAX_DEPTH * COL + NW;
-const HEIGHT = (leafCount - 1) * ROW + NH;
+const SLOTS = slot;
+add(orgTree, 0, SLOTS / 2, 2.6, 0, null);
+const HEIGHT = LEVEL * 2 + NH + 30 + Math.max(maxStack - 1, 0) * STACK + NH;
 
 function ancestors(role: string): string[] {
   const out: string[] = [];
@@ -107,17 +119,18 @@ export function related(a: string, b: string): boolean {
 interface Link {
   role: string;
   kpi: string;
+  weight: number;
 }
 function feedsUp(role: string, kpi: string): Link | null {
   for (const a of ancestors(role)) {
     const m = (KPIS.get(a) ?? []).find((k) => related(kpi, k.kpi));
-    if (m) return { role: a, kpi: m.kpi };
+    if (m) return { role: a, kpi: m.kpi, weight: m.weight };
   }
   return null;
 }
 function fedBy(role: string, kpi: string): Link[] {
   return descendants(role).flatMap((d) =>
-    (KPIS.get(d) ?? []).filter((k) => related(kpi, k.kpi)).map((k) => ({ role: d, kpi: k.kpi })),
+    (KPIS.get(d) ?? []).filter((k) => related(kpi, k.kpi)).map((k) => ({ role: d, kpi: k.kpi, weight: k.weight })),
   );
 }
 const LINKS_UP = new Map<string, number>();
@@ -125,13 +138,7 @@ NODES.forEach((_, role) => {
   LINKS_UP.set(role, (KPIS.get(role) ?? []).filter((k) => feedsUp(role, k.kpi)).length);
 });
 
-const STORY = [
-  { t: "Measure", d: "Evidence is captured where the work happens — audits, logs, NOC dashboards." },
-  { t: "Compare", d: "Each KPI is read against its agreed target." },
-  { t: "Weigh", d: "Every KPI carries a share of the role's 100%." },
-  { t: "Score", d: "Weighted KPIs add up to one score per role." },
-  { t: "Roll up", d: "Like-named KPIs carry the result to the layer above, up to the Head." },
-];
+const SHADES = ["#E00800", "#181F4B", "#7C0124", "#9C9C99", "#EB6A64", "#4A5290", "#B5586F", "#71716F"];
 
 function Dashboard() {
   const [selected, setSelected] = useState<string>(HEAD);
@@ -142,115 +149,59 @@ function Dashboard() {
   const kpis = KPIS.get(selected) ?? [];
   const totalWeight = kpis.reduce((s, k) => s + k.weight, 0);
   const node = NODES.get(selected)!;
+  const parent = node.parent;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteNav />
 
-      {/* Hero */}
-      <section className="bg-navy text-primary-foreground">
-        <div className="max-w-7xl mx-auto px-6 py-14 md:py-20 grid gap-10 md:grid-cols-[1.4fr_1fr] md:items-end">
+      {/* Structure */}
+      <section className="max-w-7xl mx-auto px-6 pt-8">
+        <div className="flex flex-wrap items-end justify-between gap-3 mb-5">
           <div>
-            <div className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">
-              Performance hierarchy
-            </div>
-            <h1 className="mt-4 text-4xl md:text-5xl font-semibold tracking-tight leading-[1.05]">
-              How every KPI
-              <br />
-              reaches the top.
-            </h1>
-            <p className="mt-5 max-w-xl text-sm md:text-base opacity-75 leading-relaxed">
-              One organisation, three pillars, {NODES.size - 1} roles. Follow a single measurement from the
-              field, through each manager, to the Head of IoT Delivery &amp; Operations.
-            </p>
-          </div>
-          <dl className="grid grid-cols-4 gap-4 md:gap-6">
-            {[
-              [String(MAX_DEPTH + 1), "Layers"],
-              [String(orgTree.children?.length ?? 0), "Pillars"],
-              [String(NODES.size - 1), "Roles"],
-              [String(Array.from(KPIS.values()).reduce((s, l) => s + l.length, 0)), "KPIs"],
-            ].map(([v, l]) => (
-              <div key={l} className="border-t border-primary pt-3">
-                <dd className="text-3xl md:text-4xl font-semibold tabular-nums">{v}</dd>
-                <dt className="mt-1 text-[11px] uppercase tracking-wider opacity-60">{l}</dt>
-              </div>
-            ))}
-          </dl>
-        </div>
-      </section>
-
-      {/* Story strip */}
-      <section className="border-b border-border">
-        <ol className="max-w-7xl mx-auto px-6 py-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
-          {STORY.map((s, i) => (
-            <li key={s.t} className="flex gap-3">
-              <span className="text-2xl font-semibold text-primary tabular-nums leading-none">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <div>
-                <div className="text-sm font-semibold">{s.t}</div>
-                <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{s.d}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      {/* Network */}
-      <section className="max-w-7xl mx-auto px-6 pt-12">
-        <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
-          <div>
-            <h2 className="text-2xl font-semibold tracking-tight">The scorecard network</h2>
+            <h1 className="text-2xl font-semibold tracking-tight">Scorecard structure</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Select any role to trace its line to the Head and see the KPIs it passes upward.
+              Select a role to see how its grade is built, what merges into it and where it travels.
             </p>
           </div>
           <div className="flex gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <span className="w-5 h-0.5 bg-primary" /> Line to the Head
+              <span className="w-5 h-0.5 bg-primary" /> Travels up
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-5 h-0.5 bg-navy" /> Teams feeding in
+              <span className="w-5 h-0.5 bg-navy" /> Merges in
             </span>
           </div>
         </div>
 
         <div className="overflow-x-auto border border-border rounded-lg bg-background">
-          <div className="p-6" style={{ width: WIDTH + 48 }}>
-            <div className="flex mb-4">
-              {LAYERS.slice(0, MAX_DEPTH + 1).map((l, i) => (
-                <div
-                  key={l}
-                  className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground font-semibold"
-                  style={{ width: i === MAX_DEPTH ? NW : COL }}
-                >
-                  <span className="text-primary mr-1.5">{String(i + 1).padStart(2, "0")}</span>
-                  {l}
-                </div>
-              ))}
-            </div>
-            <div className="relative" style={{ width: WIDTH, height: HEIGHT }}>
-              <svg width={WIDTH} height={HEIGHT} className="absolute inset-0" aria-hidden>
+          <div className="p-4 min-w-[940px]">
+            <div className="relative" style={{ height: HEIGHT }}>
+              <svg
+                viewBox={`0 0 ${SLOTS * 100} ${HEIGHT}`}
+                preserveAspectRatio="none"
+                className="absolute inset-0 w-full h-full"
+                aria-hidden
+              >
                 {Array.from(NODES.values())
                   .filter((n) => n.parent)
                   .map((n) => {
                     const p = NODES.get(n.parent!)!;
-                    const x1 = p.x + NW;
-                    const y1 = p.y + NH / 2;
-                    const x2 = n.x;
-                    const y2 = n.y + NH / 2;
-                    const mx = (x1 + x2) / 2;
+                    const x1 = p.cx * 100;
+                    const y1 = p.y + NH;
+                    const x2 = n.cx * 100;
+                    const y2 = n.y;
+                    const my = (y1 + y2) / 2;
                     const up = onPath.has(n.role);
                     const dn = below.has(n.role);
                     return (
                       <path
                         key={n.role}
-                        d={`M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`}
+                        d={`M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${y2}`}
                         fill="none"
+                        vectorEffect="non-scaling-stroke"
                         stroke={up ? "var(--primary)" : dn ? "var(--navy)" : "var(--border)"}
-                        strokeWidth={up ? 2.5 : dn ? 1.5 : 1}
-                        style={{ transition: "stroke 200ms" }}
+                        strokeWidth={up ? 2.5 : dn ? 1.75 : 1}
                       />
                     );
                   })}
@@ -259,33 +210,40 @@ function Dashboard() {
                 const isSel = n.role === selected;
                 const up = onPath.has(n.role);
                 const count = KPIS.get(n.role)?.length ?? 0;
-                const linked = LINKS_UP.get(n.role) ?? 0;
                 return (
-                  <button
+                  <div
                     key={n.role}
-                    onClick={() => setSelected(n.role)}
-                    aria-pressed={isSel}
-                    className={
-                      "absolute text-left rounded-md border px-3 flex flex-col justify-center transition-colors " +
-                      (isSel
-                        ? "bg-primary border-primary text-primary-foreground"
-                        : up
-                          ? "bg-rose-tint border-primary text-foreground"
-                          : n.depth === 0
-                            ? "bg-navy border-navy text-primary-foreground"
-                            : below.has(n.role)
-                              ? "bg-background border-navy text-foreground"
-                              : "bg-background border-border text-foreground hover:border-primary")
-                    }
-                    style={{ left: n.x, top: n.y, width: NW, height: NH }}
+                    className="absolute px-1"
+                    style={{
+                      left: `${((n.cx - n.w / 2) / SLOTS) * 100}%`,
+                      width: `${(n.w / SLOTS) * 100}%`,
+                      top: n.y,
+                      height: NH,
+                    }}
                   >
-                    <span className="text-xs font-semibold leading-tight truncate">{n.role}</span>
-                    <span className="text-[10px] opacity-70 leading-tight mt-0.5">
-                      {count
-                        ? `${count} KPIs${linked ? ` · ${linked} carried upward` : ""}`
-                        : `${n.children.length} pillars roll up here`}
-                    </span>
-                  </button>
+                    <button
+                      onClick={() => setSelected(n.role)}
+                      aria-pressed={isSel}
+                      title={n.role}
+                      className={
+                        "w-full h-full rounded-md border px-2 flex flex-col items-center justify-center text-center transition-colors " +
+                        (isSel
+                          ? "bg-primary border-primary text-primary-foreground"
+                          : up
+                            ? "bg-rose-tint border-primary text-foreground"
+                            : n.depth === 0
+                              ? "bg-navy border-navy text-primary-foreground"
+                              : below.has(n.role)
+                                ? "bg-background border-navy text-foreground"
+                                : "bg-background border-border text-foreground hover:border-primary")
+                      }
+                    >
+                      <span className="text-[11px] font-semibold leading-[1.15] line-clamp-3">{n.role}</span>
+                      <span className="text-[10px] opacity-70 leading-tight mt-0.5">
+                        {count ? `${count} KPIs` : `${n.children.length} pillars`}
+                      </span>
+                    </button>
+                  </div>
                 );
               })}
             </div>
@@ -293,50 +251,39 @@ function Dashboard() {
         </div>
       </section>
 
-      {/* Detail */}
-      <section className="max-w-7xl mx-auto px-6 py-12">
-        <nav className="flex flex-wrap items-center gap-1.5 text-xs mb-4" aria-label="Line to the Head">
-          {[...path].reverse().map((r, i) => (
-            <span key={r} className="flex items-center gap-1.5">
-              {i > 0 && <ChevronRight size={14} className="text-muted-foreground" />}
-              <button
-                onClick={() => setSelected(r)}
-                className={
-                  "px-2.5 py-1 rounded-full border " +
-                  (r === selected
-                    ? "bg-primary border-primary text-primary-foreground font-semibold"
-                    : "border-border text-muted-foreground hover:border-primary hover:text-primary")
-                }
-              >
-                {r}
-              </button>
-            </span>
-          ))}
-        </nav>
-
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 pb-6 border-b border-border">
+      {/* The science */}
+      <section className="max-w-7xl mx-auto px-6 py-10">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 pb-5 border-b border-border">
           <div>
-            <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground font-semibold">
-              Layer {String(node.depth + 1).padStart(2, "0")} · {LAYERS[node.depth]}
-            </div>
-            <h2 className="mt-1 text-3xl font-semibold tracking-tight text-primary">{selected}</h2>
+            <nav className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground" aria-label="Path">
+              {[...path].reverse().map((r, i) => (
+                <span key={r} className="flex items-center gap-1">
+                  {i > 0 && <ChevronRight size={12} />}
+                  <button onClick={() => setSelected(r)} className="hover:text-primary">
+                    {r}
+                  </button>
+                </span>
+              ))}
+            </nav>
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight text-primary">{selected}</h2>
           </div>
           {kpis.length > 0 && (
             <div className="flex gap-8">
               <Stat label="KPIs" value={String(kpis.length)} />
               <Stat label="Total weight" value={`${totalWeight}%`} />
-              <Stat label="Carried upward" value={String(LINKS_UP.get(selected) ?? 0)} />
+              <Stat label="Travel up" value={String(LINKS_UP.get(selected) ?? 0)} />
             </div>
           )}
         </div>
 
         {kpis.length === 0 ? (
           <div className="mt-6">
-            <p className="text-sm text-muted-foreground max-w-2xl">
-              The Head's view is the read-out of the pillars below. Each pillar owns a 100% scorecard of its
-              own, built from the teams reporting into it.
+            <div className="text-sm font-semibold">{node.children.length} pillar grades merge here</div>
+            <p className="mt-1 text-sm text-muted-foreground max-w-2xl">
+              The sheet holds no KPIs for this role, and no weights between pillars, so its grade is read
+              from the pillar grades below.
             </p>
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
               {node.children.map((c) => {
                 const list = [...(KPIS.get(c) ?? [])].sort((a, b) => b.weight - a.weight);
                 return (
@@ -350,7 +297,7 @@ function Dashboard() {
                     </div>
                     <div className="mt-2 text-lg font-semibold group-hover:text-primary">{c}</div>
                     <div className="mt-1 text-xs text-muted-foreground">
-                      {list.length} KPIs · {descendants(c).length} roles beneath
+                      {list.length} KPIs · {descendants(c).length} roles merge in
                     </div>
                     <ul className="mt-4 space-y-2">
                       {list.slice(0, 3).map((k) => (
@@ -366,69 +313,110 @@ function Dashboard() {
             </div>
           </div>
         ) : (
-          <ul>
-            <li className="hidden md:grid grid-cols-[1fr_150px_210px_120px] gap-4 px-1 py-3 text-[11px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border">
-              <span>KPI and where it travels</span>
-              <span>Target</span>
-              <span>Measured by</span>
-              <span>Weight</span>
-            </li>
-            {kpis.map((k, i) => {
-              const up = feedsUp(selected, k.kpi);
-              const down = fedBy(selected, k.kpi);
-              const downRoles = Array.from(new Set(down.map((d) => d.role)));
-              const rollup = /scorecard/i.test(k.kpi) && node.children.length > 0;
-              return (
-                <li
-                  key={i}
-                  className="grid md:grid-cols-[1fr_150px_210px_120px] gap-2 md:gap-4 px-1 py-4 border-b border-border"
-                >
-                  <div>
-                    <div className="text-sm font-medium">{k.kpi}</div>
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {up && (
-                        <button
-                          onClick={() => setSelected(up.role)}
-                          title={up.kpi}
-                          className="inline-flex items-center gap-1 max-w-full px-2.5 py-1 rounded-full bg-rose-tint text-primary text-[11px] font-medium hover:bg-primary hover:text-primary-foreground transition-colors"
-                        >
-                          <ArrowUp size={12} className="shrink-0" />
-                          <span className="truncate">Feeds {up.role}</span>
-                        </button>
-                      )}
-                      {downRoles.map((r) => (
-                        <button
-                          key={r}
-                          onClick={() => setSelected(r)}
-                          className="inline-flex items-center gap-1 max-w-full px-2.5 py-1 rounded-full border border-navy text-navy text-[11px] font-medium hover:bg-navy hover:text-primary-foreground transition-colors"
-                        >
-                          <ArrowDown size={12} className="shrink-0" />
-                          <span className="truncate">Fed by {r}</span>
-                        </button>
-                      ))}
-                      {rollup && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone text-foreground text-[11px] font-medium">
-                          <Layers size={12} /> Built from the scorecards below
-                        </span>
-                      )}
-                    </div>
+          <>
+            {/* How the grade is built */}
+            <div className="mt-6">
+              <div className="text-sm font-semibold">How this grade is built</div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Grade = sum of (KPI score × KPI weight). Each block is one KPI's share.
+              </p>
+              <div className="mt-3 flex w-full h-9 rounded-md overflow-hidden border border-border">
+                {kpis.map((k, i) => (
+                  <div
+                    key={i}
+                    title={`${k.kpi} — ${k.weight}%`}
+                    className="h-full flex items-center justify-center text-[11px] font-semibold text-primary-foreground border-r border-background last:border-r-0"
+                    style={{ width: `${(k.weight / totalWeight) * 100}%`, backgroundColor: SHADES[i % SHADES.length] }}
+                  >
+                    {k.weight}%
                   </div>
-                  <div className="text-xs">
-                    <span className="inline-block px-2 py-0.5 rounded border border-border font-medium">
-                      {k.target || "—"}
-                    </span>
-                  </div>
-                  <div className="text-xs text-muted-foreground leading-relaxed">{k.measurement}</div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold tabular-nums w-10">{k.weight}%</span>
-                    <div className="w-20 h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div className="h-full bg-primary" style={{ width: `${k.weight}%` }} />
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                ))}
+              </div>
+            </div>
+
+            {/* What merges and where it travels */}
+            <div className="mt-8">
+              <div className="hidden md:grid grid-cols-[1fr_24px_1.2fr_24px_1fr] gap-3 pb-2 text-[11px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border">
+                <span>Merges in from</span>
+                <span />
+                <span>KPI in this grade</span>
+                <span />
+                <span>Travels up to</span>
+              </div>
+              <ul>
+                {kpis.map((k, i) => {
+                  const up = feedsUp(selected, k.kpi);
+                  const down = fedBy(selected, k.kpi);
+                  const rollup = /scorecard/i.test(k.kpi) && node.children.length > 0;
+                  return (
+                    <li
+                      key={i}
+                      className="grid md:grid-cols-[1fr_24px_1.2fr_24px_1fr] gap-3 py-4 border-b border-border md:items-center"
+                    >
+                      <div className="space-y-1.5">
+                        {down.map((d, j) => (
+                          <button
+                            key={j}
+                            onClick={() => setSelected(d.role)}
+                            className="block w-full text-left rounded-md border border-navy px-3 py-2 hover:bg-navy hover:text-primary-foreground transition-colors"
+                          >
+                            <div className="text-[11px] font-semibold">
+                              {d.role} · {d.weight}%
+                            </div>
+                            <div className="text-[11px] opacity-75 leading-snug">{d.kpi}</div>
+                          </button>
+                        ))}
+                        {rollup && (
+                          <div className="rounded-md bg-stone px-3 py-2 text-[11px]">
+                            <span className="font-semibold">Scorecards of: </span>
+                            {node.children.join(", ")}
+                          </div>
+                        )}
+                        {!down.length && !rollup && (
+                          <div className="rounded-md bg-muted px-3 py-2 text-[11px] text-muted-foreground">
+                            <span className="font-semibold text-foreground">Measured directly: </span>
+                            {k.measurement || "—"}
+                          </div>
+                        )}
+                      </div>
+                      <ArrowRight size={16} className="hidden md:block text-navy" />
+                      <div className="rounded-md border border-border px-3 py-2.5">
+                        <div className="flex items-start gap-3">
+                          <span
+                            className="shrink-0 rounded px-1.5 py-0.5 text-xs font-semibold text-primary-foreground tabular-nums"
+                            style={{ backgroundColor: SHADES[i % SHADES.length] }}
+                          >
+                            {k.weight}%
+                          </span>
+                          <div className="text-sm font-medium leading-snug">{k.kpi}</div>
+                        </div>
+                        <div className="mt-1.5 text-[11px] text-muted-foreground">Target: {k.target || "—"}</div>
+                      </div>
+                      <ArrowRight size={16} className="hidden md:block text-primary" />
+                      <div>
+                        {up ? (
+                          <button
+                            onClick={() => setSelected(up.role)}
+                            className="block w-full text-left rounded-md bg-rose-tint border border-primary px-3 py-2 hover:bg-primary hover:text-primary-foreground transition-colors"
+                          >
+                            <div className="text-[11px] font-semibold">
+                              {up.role} · {up.weight}% of that grade
+                            </div>
+                            <div className="text-[11px] opacity-75 leading-snug">{up.kpi}</div>
+                          </button>
+                        ) : (
+                          <div className="px-3 py-2 text-[11px] text-muted-foreground">
+                            Stays in this grade
+                            {parent ? ` — reaches ${parent} through the overall score only.` : "."}
+                          </div>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </>
         )}
       </section>
 
