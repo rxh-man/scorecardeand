@@ -108,7 +108,7 @@ const scoreToRag = (score: number): RAG =>
                 type="month"
                 value={month}
                 onChange={(e) => setMonth(e.target.value)}
-                className="px-3 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:border-[#C0392B]"
+                className="px-3 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:border-[#E00800]"
               />
             </div>
 
@@ -119,7 +119,7 @@ const scoreToRag = (score: number): RAG =>
                   <button
                     key={r}
                     onClick={() => startForRole(r)}
-                    className="text-left bg-white border border-border rounded-lg p-4 hover:border-[#C0392B] hover:shadow-[0_4px_12px_rgba(192,57,43,0.08)] transition-all"
+                    className="text-left bg-white border border-border rounded-lg p-4 hover:border-[#E00800] hover:shadow-[0_4px_12px_rgba(192,57,43,0.08)] transition-all"
                   >
                     <div className="font-semibold text-[#1A1A1A] text-sm">{r}</div>
                     <div className="text-xs text-[#888888] mt-1">{kpiCount} KPIs</div>
@@ -134,7 +134,7 @@ const scoreToRag = (score: number): RAG =>
           <>
             <button
               onClick={() => setRole(null)}
-              className="text-xs text-[#555555] hover:text-[#C0392B] mb-4"
+              className="text-xs text-[#555555] hover:text-[#E00800] mb-4"
             >
               ← Change role
             </button>
@@ -142,7 +142,7 @@ const scoreToRag = (score: number): RAG =>
             <div className="bg-white border border-border rounded-lg p-5 mb-6">
               <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
                 <div>
-                  <div className="text-2xl font-semibold text-[#C0392B] tracking-tight">{role}</div>
+                  <div className="text-2xl font-semibold text-[#E00800] tracking-tight">{role}</div>
                   <div className="text-xs text-[#888888] mt-1">Cycle {month}</div>
                 </div>
                 <div className="flex gap-4 items-end">
@@ -153,7 +153,7 @@ const scoreToRag = (score: number): RAG =>
                       placeholder="Your name"
                       value={submitter}
                       onChange={(e) => setSubmitter(e.target.value)}
-                      className="px-3 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:border-[#C0392B] w-52"
+                      className="px-3 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:border-[#E00800] w-52"
                     />
                   </div>
                   <div className="text-right">
@@ -180,7 +180,7 @@ const scoreToRag = (score: number): RAG =>
               <button
                 onClick={handleSubmit}
                 disabled={!submitter.trim()}
-                className="px-5 py-2 text-sm font-semibold bg-[#C0392B] text-white rounded-md hover:bg-[#A53224] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-2 text-sm font-semibold bg-[#E00800] text-white rounded-md hover:bg-[#A53224] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Submit for Governance Review
               </button>
@@ -200,7 +200,7 @@ function KpiCard({ entry, onChange }: { entry: KpiEntry; onChange: (p: Partial<K
         <div className="flex-1">
           <div className="text-sm font-semibold text-[#1A1A1A]">{entry.kpi}</div>
           <div className="text-xs text-[#888888] mt-1">
-            Target: <span className="text-[#C0392B] font-medium">{entry.target}</span> · Weight {entry.weight}%
+            Target: <span className="text-[#E00800] font-medium">{entry.target}</span> · Weight {entry.weight}%
           </div>
         </div>
       </div>
@@ -214,7 +214,7 @@ function KpiCard({ entry, onChange }: { entry: KpiEntry; onChange: (p: Partial<K
             max={100}
             value={entry.selfScore}
             onChange={(e) => onChange({ selfScore: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })}
-            className="w-full px-3 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:border-[#C0392B]"
+            className="w-full px-3 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:border-[#E00800]"
           />
         </Field>
         <Field label="RAG (auto)">
@@ -235,7 +235,7 @@ function KpiCard({ entry, onChange }: { entry: KpiEntry; onChange: (p: Partial<K
             onChange={(e) => onChange({ comment: e.target.value })}
             rows={2}
             placeholder="Notes, context, blockers…"
-            className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:border-[#C0392B] resize-none"
+            className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:border-[#E00800] resize-none"
           />
         </Field>
       </div>
@@ -244,7 +244,7 @@ function KpiCard({ entry, onChange }: { entry: KpiEntry; onChange: (p: Partial<K
         <label className="block text-xs uppercase tracking-wide text-[#888888] font-semibold mb-1">
           Supporting Evidence
         </label>
-        <label className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium border border-dashed border-[#C0392B] text-[#C0392B] rounded-md cursor-pointer hover:bg-[#FDECEA]">
+        <label className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium border border-dashed border-[#E00800] text-[#E00800] rounded-md cursor-pointer hover:bg-[#FDECEA]">
           <Upload size={14} />
           Attach files
           <input
@@ -265,7 +265,7 @@ function KpiCard({ entry, onChange }: { entry: KpiEntry; onChange: (p: Partial<K
                 <span className="text-[#1A1A1A] truncate">{f.name}</span>
                 <button
                   onClick={() => onChange({ evidence: entry.evidence.filter((_, j) => j !== i) })}
-                  className="text-[#888888] hover:text-[#C0392B] ml-2"
+                  className="text-[#888888] hover:text-[#E00800] ml-2"
                 >
                   <X size={14} />
                 </button>
@@ -307,7 +307,7 @@ function SubmittedAck({ submission, onNew }: { submission: Submission; onNew: ()
         </button>
         <Link
           to="/governance"
-          className="px-4 py-2 text-sm font-semibold bg-[#C0392B] text-white rounded-md hover:bg-[#A53224]"
+          className="px-4 py-2 text-sm font-semibold bg-[#E00800] text-white rounded-md hover:bg-[#A53224]"
         >
           View governance queue
         </Link>

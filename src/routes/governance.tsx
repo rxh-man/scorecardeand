@@ -47,7 +47,7 @@ function GovernancePage() {
       <main className="max-w-7xl mx-auto px-6 py-10">
         <div className="flex items-end justify-between gap-4 flex-wrap">
           <div>
-            <div className="text-xs uppercase tracking-[0.18em] text-[#C0392B] font-semibold flex items-center gap-2">
+            <div className="text-xs uppercase tracking-[0.18em] text-[#E00800] font-semibold flex items-center gap-2">
               <ShieldCheck size={14} /> Governance
             </div>
             <h1 className="mt-1 text-2xl font-semibold text-[#1A1A1A] tracking-tight">Review Queue</h1>
@@ -61,8 +61,8 @@ function GovernancePage() {
                 className={
                   "px-3 py-1.5 text-xs font-semibold rounded-md border " +
                   (filter === k
-                    ? "bg-[#C0392B] text-white border-[#C0392B]"
-                    : "bg-white text-[#555555] border-border hover:border-[#C0392B] hover:text-[#C0392B]")
+                    ? "bg-[#E00800] text-white border-[#E00800]"
+                    : "bg-white text-[#555555] border-border hover:border-[#E00800] hover:text-[#E00800]")
                 }
               >
                 {k.charAt(0).toUpperCase() + k.slice(1)}
@@ -101,7 +101,7 @@ function GovernancePage() {
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => setOpenId(s.id)}
-                        className="px-3 py-1.5 text-xs font-semibold bg-white border border-[#C0392B] text-[#C0392B] rounded-md hover:bg-[#FDECEA]"
+                        className="px-3 py-1.5 text-xs font-semibold bg-white border border-[#E00800] text-[#E00800] rounded-md hover:bg-[#FDECEA]"
                       >
                         Review
                       </button>
@@ -192,7 +192,7 @@ function ReviewDrawer({
       >
         <div className="sticky top-0 bg-white border-b border-border px-6 py-4 flex items-start justify-between gap-4 z-10">
           <div>
-            <div className="text-xl font-semibold text-[#C0392B]">{local.role}</div>
+            <div className="text-xl font-semibold text-[#E00800]">{local.role}</div>
             <div className="text-xs text-[#888888] mt-0.5">
               {local.submitter} · Cycle {local.month} · <StatusBadge status={local.status} />
             </div>
@@ -212,7 +212,7 @@ function ReviewDrawer({
                   <div className="flex-1">
                     <div className="text-sm font-semibold text-[#1A1A1A]">{e.kpi}</div>
                     <div className="text-xs text-[#888888] mt-0.5">
-                      Target: <span className="text-[#C0392B] font-medium">{e.target}</span> · Weight {e.weight}%
+                      Target: <span className="text-[#E00800] font-medium">{e.target}</span> · Weight {e.weight}%
                     </div>
                   </div>
                   <span
@@ -240,7 +240,7 @@ function ReviewDrawer({
                           onChange={(ev) =>
                             update(i, { reviewedScore: Math.max(0, Math.min(100, Number(ev.target.value) || 0)) })
                           }
-                          className="w-full px-2 py-1 text-sm border border-border rounded focus:outline-none focus:border-[#C0392B]"
+                          className="w-full px-2 py-1 text-sm border border-border rounded focus:outline-none focus:border-[#E00800]"
                         />
                       )
                     }
@@ -280,7 +280,7 @@ function ReviewDrawer({
                       rows={2}
                       value={e.reviewerNote || ""}
                       onChange={(ev) => update(i, { reviewerNote: ev.target.value })}
-                      className="w-full px-2 py-1.5 text-xs border border-border rounded focus:outline-none focus:border-[#C0392B] resize-none"
+                      className="w-full px-2 py-1.5 text-xs border border-border rounded focus:outline-none focus:border-[#E00800] resize-none"
                       placeholder="Confirm or describe the adjustment rationale…"
                     />
                   )}
@@ -301,13 +301,13 @@ function ReviewDrawer({
             <>
               <button
                 onClick={save}
-                className="px-4 py-2 text-sm font-semibold bg-white border border-[#C0392B] text-[#C0392B] rounded-md hover:bg-[#FDECEA]"
+                className="px-4 py-2 text-sm font-semibold bg-white border border-[#E00800] text-[#E00800] rounded-md hover:bg-[#FDECEA]"
               >
                 Save changes
               </button>
               <button
                 onClick={finalize}
-                className="px-5 py-2 text-sm font-semibold bg-[#C0392B] text-white rounded-md hover:bg-[#A53224] inline-flex items-center gap-2"
+                className="px-5 py-2 text-sm font-semibold bg-[#E00800] text-white rounded-md hover:bg-[#A53224] inline-flex items-center gap-2"
               >
                 <Lock size={14} /> Finalize Scorecard
               </button>

@@ -60,5 +60,5 @@ export function currentMonth(): string {
 export function ragColor(r: RAG): { bg: string; fg: string; border: string } {
   if (r === "Green") return { bg: "#E8F5EE", fg: "#1E7E45", border: "#9FD6B5" };
   if (r === "Amber") return { bg: "#FEF3E2", fg: "#B5730E", border: "#F1C98B" };
-  return { bg: "#FDECEA", fg: "#C0392B", border: "#F1B0A8" };
+  return { bg: "#FDECEA", fg: "#E00800", border: "#F1B0A8" };
 }

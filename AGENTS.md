@@ -1,0 +1,1 @@
+- The reporting hierarchy lives in `src/data/hierarchy.ts`, separate from `src/data/scorecard.ts`. Why: spreadsheet re-imports regenerate the KPI file and must not wipe the hierarchy; role names must match exactly.

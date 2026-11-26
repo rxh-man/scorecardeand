@@ -15,7 +15,9 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --color-navy: var(--navy);
+  --color-stone: var(--stone);
+  --font-sans: 'Suisse Intl', 'Inter', system-ui, sans-serif;
 }
 
 :root {
@@ -24,13 +26,15 @@
   --muted: #F7F7F7;
   --muted-foreground: #555555;
   --border: #E0E0E0;
-  --primary: #C0392B;
+  --primary: #E00800;
   --primary-foreground: #FFFFFF;
   --rose-tint: #FDECEA;
   --rose-row: #FDF5F5;
   --success: #27AE60;
   --warning: #F39C12;
-  --danger: #C0392B;
+  --danger: #E00800;
+  --navy: #181F4B;
+  --stone: #E2E2D7;
 }
 
 * {
@@ -40,7 +44,7 @@
 html, body {
   background: #FFFFFF;
   color: #1A1A1A;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Suisse Intl', 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
