@@ -4,6 +4,7 @@ import { ArrowDown, ArrowRight, ArrowUp, ChevronRight, Layers, Lock } from "luci
 import { scorecardData, type ScorecardEntry } from "@/data/scorecard";
 import { HEAD, orgTree, type OrgNode } from "@/data/hierarchy";
 import { SiteNav } from "@/components/SiteNav";
+import { CostScenario } from "@/components/CostScenario";
 
 const TITLE = "IoT Ops Scorecard — Scorecard structure";
 const DESC =
@@ -75,6 +76,11 @@ for (const e of scorecardData) {
   list.push(e);
   KPIS.set(e.role, list);
 }
+
+const TEAMS = Array.from(KPIS.keys()).map((role) => {
+  const up = ancestors(role);
+  return { role, pillar: up.length >= 2 ? (up[up.length - 2] ?? role) : role };
+});
 
 const STOP = new Set(
   "the of for per all and to within by in on vs avg average overall rate time no with type types as from or is at total".split(" "),
@@ -201,6 +207,7 @@ function Dashboard() {
                         d={`M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${y2}`}
                         fill="none"
                         vectorEffect="non-scaling-stroke"
+                        className={up ? "edge-flow" : dn ? "edge-flow-slow" : undefined}
                         stroke={up ? "var(--primary)" : dn ? "var(--navy)" : "var(--border)"}
                         strokeWidth={up ? 2.5 : dn ? 1.75 : 1}
                       />
@@ -229,7 +236,7 @@ function Dashboard() {
                       className={
                         "w-full h-full rounded-md border px-0.5 overflow-hidden flex flex-col items-center justify-center text-center transition-colors " +
                         (isSel
-                          ? "bg-primary border-primary text-primary-foreground"
+                          ? "pulse-ring bg-primary border-primary text-primary-foreground"
                           : up
                             ? "bg-rose-tint border-primary text-foreground"
                             : n.depth === 0
@@ -253,7 +260,7 @@ function Dashboard() {
       </section>
 
       {/* The science */}
-      <section ref={detailRef} className="max-w-7xl mx-auto px-6 py-10 scroll-mt-16">
+      <section key={selected} ref={detailRef} className="rise max-w-7xl mx-auto px-6 py-10 scroll-mt-16">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 pb-5 border-b border-border">
           <div>
             <nav className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground" aria-label="Path">
@@ -317,7 +324,7 @@ function Dashboard() {
           <>
             {/* Split: passed up vs own */}
             <div className="mt-6">
-              <div className="flex w-full h-10 rounded-md overflow-hidden border border-border text-xs font-semibold text-primary-foreground">
+              <div className="grow flex w-full h-10 rounded-md overflow-hidden border border-border text-xs font-semibold text-primary-foreground">
                 {passedWeight > 0 && (
                   <div className="h-full flex items-center px-3 bg-primary" style={{ width: `${(passedWeight / totalWeight) * 100}%` }}>
                     <span className="truncate">{passedWeight}% passed up</span>
@@ -348,7 +355,7 @@ function Dashboard() {
                 </div>
                 <ul>
                   {passed.map(({ k, up }, i) => (
-                    <li key={i} className="px-4 py-3 border-t border-border">
+                    <li key={i} className="rise px-4 py-3 border-t border-border" style={{ animationDelay: `${150 + i * 70}ms` }}>
                       <div className="flex items-start gap-3">
                         <span className="shrink-0 w-10 text-sm font-semibold text-primary tabular-nums">{k.weight}%</span>
                         <div className="min-w-0">
@@ -387,7 +394,7 @@ function Dashboard() {
                 </div>
                 <ul>
                   {own.map(({ k }, i) => (
-                    <li key={i} className="px-4 py-3 border-t border-border">
+                    <li key={i} className="rise px-4 py-3 border-t border-border" style={{ animationDelay: `${150 + i * 70}ms` }}>
                       <div className="flex items-start gap-3">
                         <span className="shrink-0 w-10 text-sm font-semibold text-navy tabular-nums">{k.weight}%</span>
                         <div className="min-w-0">
@@ -453,6 +460,8 @@ function Dashboard() {
           </>
         )}
       </section>
+
+      <CostScenario teams={TEAMS} />
 
       <footer className="border-t border-border">
         <div className="max-w-7xl mx-auto px-6 py-6 text-center text-xs text-muted-foreground">
